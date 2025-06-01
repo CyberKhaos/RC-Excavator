@@ -15,7 +15,7 @@ public:
     pinMode(IN2, OUTPUT);
   }
 
-  void spin(bool forward = true) {
+  void spin(bool forward) {
     if (forward) {
       startSpin(IN1, IN2);
     } else {
@@ -28,7 +28,6 @@ public:
     digitalWrite(IN2, LOW);
   }
 
-private:
   void startSpin(int a, int b){
     digitalWrite(a, HIGH);
     digitalWrite(b, LOW);
@@ -99,18 +98,90 @@ LED Light(6);
 
 // Aufbau und Hauptsteuerung
 void setup() {
-  
+  Light.turnOn(); // LED einschalten
+  delay(2000); // Kurze Verzögerung, um sicherzustellen, dass die LED eingeschaltet ist
+  Light.turnOff(); // LED ausschalten
 }
 
 void loop() {
-
-  // Beispiel
-  String command = BT_Module.receiveData();
-  if (command == "start") {
-    M1.spin(true);
-  } else if (command == "stop") {
-    M1.stop();
-  }
+  
 }
 
 // Funktionen des Buggers
+
+void driveForward() {
+  M1.spin(true); // Linker Motor fährt vorwärts
+  M2.spin(true); // Rechter Motor fährt vorwärts
+}
+
+void driveBackward() {
+  M1.spin(false); // Linker Motor fährt rückwärts
+  M2.spin(false); // Rechter Motor fährt rückwärts
+}
+
+void turnLeft() {
+  M1.stop(); // Linker Motor stoppt
+  M2.spin(true); // Rechter Motor fährt vorwärts
+}
+
+void turnRight() {
+  M1.spin(true); // Linker Motor fährt vorwärts
+  M2.stop(); // Rechter Motor stoppt
+}
+
+void stopMovement() {
+  M1.stop(); // Linker Motor stoppt
+  M2.stop(); // Rechter Motor stoppt
+}
+
+void towerTurnLeft() {
+  M3.spin(true); // Turmmotor dreht nach links
+}
+
+void towerTurnRight() {
+  M3.spin(false); // Turmmotor dreht nach rechts
+}
+
+void towerStop() {
+  M3.stop(); // Turmmotor stoppt
+}
+
+void upperArmUp() {
+  M5.spin(true); // Oberarmmotor fährt nach oben
+}
+
+void upperArmDown() {
+  M5.spin(false); // Oberarmmotor fährt nach unten
+}
+
+void upperArmStop() {
+  M5.stop(); // Oberarmmotor stoppt
+}
+
+void lowerArmUp() {
+  M4.spin(true); // Unterarmmotor fährt nach oben
+}
+
+void lowerArmDown() {
+  M4.spin(false); // Unterarmmotor fährt nach unten
+}
+
+void lowerArmStop() {
+  M4.stop(); // Unterarmmotor stoppt
+}
+
+void shovelUp() {
+  M6.spin(true); // Schaufelmotor fährt nach oben
+}
+
+void shovelDown() {
+  M6.spin(false); // Schaufelmotor fährt nach unten
+}
+
+void shovelStop() {
+  M6.stop(); // Schaufelmotor stoppt
+}
+
+void toggleLight() {
+  Light.toggle(); // LED umschalten
+}
