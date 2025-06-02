@@ -88,12 +88,8 @@ class GamePad : public PS4Controller {
 private:
   String macAddress;
 public:
-  GamePad(String mac) { // Konstruktor
-    if (isValidMac(mac)) {
-      macAddress = mac; // Setzt die MAC-Adresse, wenn sie gültig ist
-    } else {
-      macAddress = "00:00:00:00:00:00"; // Standard-MAC-Adresse, falls ungültig
-    }
+  GamePad() { // Konstruktor
+    macAddress = "00:00:00:00:00:00"; // Standard-MAC-Adresse, falls ungültig
   }
 
   bool begin(String mac) {
@@ -122,7 +118,7 @@ public:
 
 // Erstellen der ObjektInstanzen 
 
-GamePad Controller("00:00:00:00:00:00"); // PS4 Controller mit einer seiner MAC-Adresse
+GamePad Controller; // PS4 Controller
 
 Engine M1(23, 22); // Kettenmotor links
 Engine M2(21, 19); // Kettenmotor rechts
@@ -142,7 +138,7 @@ void setup() {
   bool connected = false;
   for (int i = 1; i <= 3; i++) {
     Light.blink(500); // LED blinkt, um den Verbindungsversuch anzuzeigen
-    if (PS4.begin("00:00:00:00:00:00")) { // Hier sollte die tatsächliche MAC-Adresse des PS4 Controllers stehen
+    if (PS4.begin("A4:53:85:0E:9C:61")) { // Hier sollte die tatsächliche MAC-Adresse des PS4 Controllers stehen
       for (int j = 0; j < 3; j++) Light.blink(100); // LED blinkt 3 mal, um erfolgreiche Verbindung anzuzeigen
       connected = true;
       Light.turnOn(); // LED bleibt an, wenn die Verbindung erfolgreich ist
