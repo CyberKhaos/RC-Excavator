@@ -1,4 +1,8 @@
 #include <SoftwareSerial.h>
+#include <PS4Controller.h>
+#include <string>
+
+using namespace std;
 
 // Klassen der Hardware-Komponenten
 
@@ -8,7 +12,7 @@ private:
   int IN2;
 
 public:
-  Engine(int in1, int in2) {
+  Engine(int in1, int in2) { // Konstruktor
     IN1 = in1;
     IN2 = in2;
     pinMode(IN1, OUTPUT);
@@ -65,27 +69,41 @@ public:
   }
 };
 
-class BT {
+class PS4Controller {
 private:
-  SoftwareSerial* btSerial; // Zeiger auf SoftwareSerial
-
+  string macAddress;
 public:
-  BT(int rx, int tx) {
-    btSerial = new SoftwareSerial(rx, tx);
-    btSerial->begin(9600); // Bluetooth-Modul starten
+  PS4Controller() { // Konstruktor
+    macAddress = "00:00:00:00:00:00"; // Standard-MAC-Adresse
   }
 
-  String receiveData() {
-    if (btSerial->available()) {
-      return btSerial->readString();
+  bool begin(string mac) {
+    if (isValidMac(mac)) {
+      macAddress = mac;
+      // Hier sollte die Logik zum Verbinden des Controllers implementiert werden
+      return true; // Simuliert eine erfolgreiche Verbindung
+    } else {
+      return false; // Mac-Adresse ist ungültig
     }
-    return "";
   }
-};
+
+  // Validierung der MAC-Adresse
+  bool isValidMac(string mac) {
+    if (mac.length() != 17) return false;
+    for (int i = 0; i < mac.length(); i++) {
+      if (i % 3 == 2) {
+        if (mac[i] != ':') return false;
+      } else {
+        if (!isxdigit(mac[i])) return false;
+      }
+    }
+    return true;
+  }
+}
 
 // Erstellen der ObjektInstanzen 
 
-BT BT_Module(10, 11);
+PS4Controller PS4;
 
 Engine M1(A0, A1); // Kettenmotor links
 Engine M2(A2, A3); // Kettenmotor rechts
@@ -97,36 +115,90 @@ Engine M6(4, 5); // Schaufelmotor
 LED Light(6);
 
 // Aufbau und Hauptsteuerung
+
 void setup() {
   Light.turnOn(); // LED einschalten
-  delay(2000); // Kurze Verzögerung, um sicherzustellen, dass die LED eingeschaltet ist
+
+  Serial.begin(115200); // Serielle Kommunikation starten
+  
+  // PS4 Controller mit Mac initialisieren
+  bool connected = false;
+  for (int i = 1; i <= 3; i++) {
+    Light.blink(500); // LED blinkt, um den Verbindungsversuch anzuzeigen
+    if (PS4.begin("00:00:00:00:00:00")) { // Hier sollte die tatsächliche MAC-Adresse des PS4 Controllers stehen
+      Serial.println("PS4 Controller verbunden");
+      connected = true;
+      Light.turnOn(); // LED bleibt an, wenn die Verbindung erfolgreich ist
+      break; // Verbindung erfolgreich, Schleife verlassen
+    } else {
+      Serial.println("Fehler beim Verbinden des PS4 Controllers");
+      Serial.println("Versuch " + String(i) + " von 3...");
+      delay(3000); // Wartezeit vor erneutem Versuch
+      Serial.println("Versuche erneut zu verbinden...");
+    }
+  }
+
+  if (!connected) {
+    Serial.println("Verbindung zum PS4 Controller fehlgeschlagen. Programm wird angehalten.");
+    while (true); // Endlosschleife, um das Programm anzuhalten
+  }
+
+  delay(2000);
   Light.turnOff(); // LED ausschalten
 }
 
 void loop() {
-  
+  if (PS4.isConnected()) {
+    // LED umschalten
+    if (PS4.Options()) Light.toggle(); 
+    
+    // Tummersteuerung
+    if (PS4.L1()) towerTurnLeft();
+    else if (PS4.R1()) towerTurnRight();
+    else towerStop();
+
+    // Bewegungssteuerung
+    if (PS4.Up()) drive(true); // Vorwärts fahren
+    else if (PS4.Down()) drive(false); // Rückwärts fahren
+    else if (PS4.Left()) turnLeft();
+    else if (PS4.Right()) turnRight();
+    else stopMovement();
+
+    // Oberarmsteuerung
+    if (PS4.Triangle()) upperArmUp();
+    else if (PS4.Circle()) upperArmDown();
+    else upperArmStop();
+
+    // Unterarm
+    if (PS4.Cross()) lowerArmUp();
+    else if (PS4.Square()) lowerArmDown();
+    else lowerArmStop();
+
+    // Schaufelsteuerung
+    if (PS4.L2()) shovelUp();
+    else if (PS4.R2()) shovelDown();
+    else shovelStop();
+    
+    // Alle Motoren stoppen, wenn Share gedrückt wird
+    if (PS4.Share()) StopAllMotors(); 
+  }
 }
 
 // Funktionen des Buggers
 
-void driveForward() {
-  M1.spin(true); // Linker Motor fährt vorwärts
-  M2.spin(true); // Rechter Motor fährt vorwärts
+void drive(bool forward) {
+  M1.spin(forward); // Linker Motor fährt vorwärts oder rückwärts
+  M2.spin(forward); // Rechter Motor fährt vorwärts oder rückwärts
 }
 
-void driveBackward() {
-  M1.spin(false); // Linker Motor fährt rückwärts
-  M2.spin(false); // Rechter Motor fährt rückwärts
-}
-
-void turnLeft() {
-  M1.stop(); // Linker Motor stoppt
-  M2.spin(true); // Rechter Motor fährt vorwärts
-}
-
-void turnRight() {
-  M1.spin(true); // Linker Motor fährt vorwärts
-  M2.stop(); // Rechter Motor stoppt
+void turn(bool left) {
+  if (left) { // Wenn nach links gedreht wird
+    M1.stop(); // Linker Motor stoppt
+    M2.spin(true); // Rechter Motor fährt vorwärts
+  } else { // Wenn nach rechts gedreht wird
+    M1.spin(true); // Linker Motor fährt vorwärts
+    M2.stop(); // Rechter Motor stoppt
+  }
 }
 
 void stopMovement() {
@@ -134,54 +206,43 @@ void stopMovement() {
   M2.stop(); // Rechter Motor stoppt
 }
 
-void towerTurnLeft() {
-  M3.spin(true); // Turmmotor dreht nach links
+void turnTower(bool left) {
+  M3.spin(left); // Turmmotor dreht in die angegebene Richtung
 }
 
-void towerTurnRight() {
-  M3.spin(false); // Turmmotor dreht nach rechts
-}
-
-void towerStop() {
+void stopTower() {
   M3.stop(); // Turmmotor stoppt
 }
 
-void upperArmUp() {
-  M5.spin(true); // Oberarmmotor fährt nach oben
+void moveUpperArm(bool up) {
+  M5.spin(up); // Oberarmmotor fährt in die angegebene Richtung
 }
 
-void upperArmDown() {
-  M5.spin(false); // Oberarmmotor fährt nach unten
-}
-
-void upperArmStop() {
+void stopUpperArm() {
   M5.stop(); // Oberarmmotor stoppt
 }
 
-void lowerArmUp() {
-  M4.spin(true); // Unterarmmotor fährt nach oben
+void moveLowerArm(bool up) {
+  M4.spin(up); // Unterarmmotor fährt in die angegebene Richtung
 }
 
-void lowerArmDown() {
-  M4.spin(false); // Unterarmmotor fährt nach unten
-}
-
-void lowerArmStop() {
+void stopLowerArm() {
   M4.stop(); // Unterarmmotor stoppt
 }
 
-void shovelUp() {
-  M6.spin(true); // Schaufelmotor fährt nach oben
+void moveShovel(bool up) {
+  M6.spin(up); // Schaufelmotor fährt in die angegebene Richtung
 }
 
-void shovelDown() {
-  M6.spin(false); // Schaufelmotor fährt nach unten
-}
 
-void shovelStop() {
+void stopShovel() {
   M6.stop(); // Schaufelmotor stoppt
 }
 
-void toggleLight() {
-  Light.toggle(); // LED umschalten
+void StopAllMotors() {
+  stopMovement(); // Alle Bewegungsmotoren stoppen
+  stopTower(); // Turmmotor stoppen
+  stopUpperArm(); // Oberarmmotor stoppen
+  stopLowerArm(); // Unterarmmotor stoppen
+  stopShovel(); // Schaufelmotor stoppen
 }
