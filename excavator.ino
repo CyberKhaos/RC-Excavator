@@ -3,19 +3,22 @@
 
 // Klassen der Hardware-Komponenten
 
+// Klasse für die Motorsteuerung
 class Engine {
 private:
-  int IN1;
-  int IN2;
+  int pin1;
+  int pin1;
 
 public:
-  Engine(int in1, int in2) { // Konstruktor
-    IN1 = in1;
-    IN2 = in2;
+  Engine(int in1, int in2) { // Konstruktor mint zwei Pins
+    pin1 = in1;
+    pin2 = in2;
     pinMode(IN1, OUTPUT);
     pinMode(IN2, OUTPUT);
   }
 
+  // Motorsteuerung 
+  // Vorwärts(true) oder rückwärts(false) drehen
   void spin(bool forward) {
     if (forward) {
       startSpin(IN1, IN2);
@@ -24,17 +27,20 @@ public:
     }
   }
 
+  // Motor stoppen
   void stop() {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, LOW);
+    digitalWrite(pin1, LOW);
+    digitalWrite(pin2, LOW);
   }
 
-  void startSpin(int a, int b){
-    digitalWrite(a, HIGH);
-    digitalWrite(b, LOW);
+  // Startet den Motor in die angegebene Richtung
+  void startSpin(int high, int low){
+    digitalWrite(high, HIGH);
+    digitalWrite(low, LOW);
   }
 };
 
+// Klasse für die LED-Steuerung
 class LED {
 private:
   int pin;
@@ -47,16 +53,19 @@ public:
     pinMode(pin, OUTPUT);
   }
 
+  // LED einschalten
   void turnOn() {
     digitalWrite(pin, HIGH);
     state = HIGH;
   }
 
+  // LED ausschalten
   void turnOff() {
     digitalWrite(pin, LOW);
     state = LOW;
   }
 
+  // LED blinken für eine bestimmte Dauer
   void blink(int duration) {
     turnOn();
     delay(duration);
@@ -64,6 +73,7 @@ public:
     delay(duration);
   }
 
+  // LED umschalten
   void toggle() {
     if (state == HIGH) {
       turnOff();
@@ -73,6 +83,7 @@ public:
   }
 };
 
+// Klasse für den PS4 Controller
 class GamePad : public PS4Controller {
 private:
   String macAddress;
@@ -111,7 +122,7 @@ public:
 
 // Erstellen der ObjektInstanzen 
 
-GamePad Controller("00:00:00:00:00:00");
+GamePad Controller("00:00:00:00:00:00"); // PS4 Controller mit einer seiner MAC-Adresse
 
 Engine M1(23, 22); // Kettenmotor links
 Engine M2(21, 19); // Kettenmotor rechts
@@ -127,22 +138,23 @@ LED Light(13);
 void setup() {
   Light.turnOn(); // LED einschalten
   
-  Serial.begin(115200); // Serielle Kommunikation starten
-  
   // PS4 Controller mit Mac initialisieren
   bool connected = false;
   for (int i = 1; i <= 3; i++) {
     Light.blink(500); // LED blinkt, um den Verbindungsversuch anzuzeigen
     if (PS4.begin("00:00:00:00:00:00")) { // Hier sollte die tatsächliche MAC-Adresse des PS4 Controllers stehen
-      Serial.println("PS4 Controller verbunden");
+      for (int j = 0; j < 3; j++) Light.blink(100); // LED blinkt 3 mal, um erfolgreiche Verbindung anzuzeigen
       connected = true;
       Light.turnOn(); // LED bleibt an, wenn die Verbindung erfolgreich ist
+      delay(1000); // Kurze Pause, um die erfolgreiche Verbindung anzuzeigen
       break; // Verbindung erfolgreich, Schleife verlassen
     } else {
       Serial.println("Fehler beim Verbinden des PS4 Controllers");
       Serial.println("Versuch " + String(i) + " von 3...");
       delay(3000); // Wartezeit vor erneutem Versuch
       Serial.println("Versuche erneut zu verbinden...");
+      for (int j = 0; j < 5; j++) Light.blink(100); // LED blinkt 5 mal, um den Verbindungsversuch anzuzeigen 
+      delay(1000); // Kurze Pause vor dem nächsten Versuch
     }
   }
 
@@ -158,7 +170,7 @@ void setup() {
 void loop() {
   if (PS4.isConnected()) {
     // LED umschalten
-    if (PS4.Options()) Light.toggle(); 
+    if (PS4.Share()) Light.toggle(); 
     
     // Tummersteuerung
     if (PS4.L1()) turnTower(true);
@@ -188,7 +200,7 @@ void loop() {
     else stopShovel();
     
     // Alle Motoren stoppen, wenn Share gedrückt wird
-    if (PS4.Share()) StopAllMotors(); 
+    if (PS4.Options()) StopAllMotors(); 
   }
 }
 
