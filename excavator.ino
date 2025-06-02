@@ -1,8 +1,5 @@
-#include <SoftwareSerial.h>
 #include <PS4Controller.h>
-#include <string>
-
-using namespace std;
+#include <Arduino.h>
 
 // Klassen der Hardware-Komponenten
 
@@ -60,6 +57,13 @@ public:
     state = LOW;
   }
 
+  void blink(int duration) {
+    turnOn();
+    delay(duration);
+    turnOff();
+    delay(duration);
+  }
+
   void toggle() {
     if (state == HIGH) {
       turnOff();
@@ -69,15 +73,19 @@ public:
   }
 };
 
-class PS4Controller {
+class GamePad : public PS4Controller {
 private:
-  string macAddress;
+  String macAddress;
 public:
-  PS4Controller() { // Konstruktor
-    macAddress = "00:00:00:00:00:00"; // Standard-MAC-Adresse
+  GamePad(String mac) { // Konstruktor
+    if (isValidMac(mac)) {
+      macAddress = mac; // Setzt die MAC-Adresse, wenn sie gültig ist
+    } else {
+      macAddress = "00:00:00:00:00:00"; // Standard-MAC-Adresse, falls ungültig
+    }
   }
 
-  bool begin(string mac) {
+  bool begin(String mac) {
     if (isValidMac(mac)) {
       macAddress = mac;
       // Hier sollte die Logik zum Verbinden des Controllers implementiert werden
@@ -88,7 +96,7 @@ public:
   }
 
   // Validierung der MAC-Adresse
-  bool isValidMac(string mac) {
+  bool isValidMac(String mac) {
     if (mac.length() != 17) return false;
     for (int i = 0; i < mac.length(); i++) {
       if (i % 3 == 2) {
@@ -99,26 +107,26 @@ public:
     }
     return true;
   }
-}
+};
 
 // Erstellen der ObjektInstanzen 
 
-PS4Controller PS4;
+GamePad Controller("00:00:00:00:00:00");
 
-Engine M1(A0, A1); // Kettenmotor links
-Engine M2(A2, A3); // Kettenmotor rechts
-Engine M3(A4, A5); // Turmmotor
-Engine M4(A6, A7); // Unterarmmotor
-Engine M5(2, 3); // Oberarmmotor
-Engine M6(4, 5); // Schaufelmotor
+Engine M1(23, 22); // Kettenmotor links
+Engine M2(21, 19); // Kettenmotor rechts
+Engine M3(18, 5); // Turmmotor
+Engine M4(17, 16); // Unterarmmotor
+Engine M5(4, 0); // Oberarmmotor
+Engine M6(2, 15); // Schaufelmotor
 
-LED Light(6);
+LED Light(13);
 
 // Aufbau und Hauptsteuerung
 
 void setup() {
   Light.turnOn(); // LED einschalten
-
+  
   Serial.begin(115200); // Serielle Kommunikation starten
   
   // PS4 Controller mit Mac initialisieren
@@ -153,31 +161,31 @@ void loop() {
     if (PS4.Options()) Light.toggle(); 
     
     // Tummersteuerung
-    if (PS4.L1()) towerTurnLeft();
-    else if (PS4.R1()) towerTurnRight();
-    else towerStop();
+    if (PS4.L1()) turnTower(true);
+    else if (PS4.R1()) turnTower(false);
+    else stopTower();
 
     // Bewegungssteuerung
     if (PS4.Up()) drive(true); // Vorwärts fahren
     else if (PS4.Down()) drive(false); // Rückwärts fahren
-    else if (PS4.Left()) turnLeft();
-    else if (PS4.Right()) turnRight();
+    else if (PS4.Left()) turn(true);
+    else if (PS4.Right()) turn(false);
     else stopMovement();
 
     // Oberarmsteuerung
-    if (PS4.Triangle()) upperArmUp();
-    else if (PS4.Circle()) upperArmDown();
-    else upperArmStop();
+    if (PS4.Triangle()) moveUpperArm(true);
+    else if (PS4.Circle()) moveUpperArm(false);
+    else stopUpperArm();
 
     // Unterarm
-    if (PS4.Cross()) lowerArmUp();
-    else if (PS4.Square()) lowerArmDown();
-    else lowerArmStop();
+    if (PS4.Cross()) moveLowerArm(true);
+    else if (PS4.Square()) moveLowerArm(false);
+    else stopLowerArm();
 
     // Schaufelsteuerung
-    if (PS4.L2()) shovelUp();
-    else if (PS4.R2()) shovelDown();
-    else shovelStop();
+    if (PS4.L2()) moveShovel(true);
+    else if (PS4.R2()) moveShovel(false);
+    else stopShovel();
     
     // Alle Motoren stoppen, wenn Share gedrückt wird
     if (PS4.Share()) StopAllMotors(); 
