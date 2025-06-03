@@ -1,29 +1,28 @@
 #include <PS4Controller.h>
 #include <Arduino.h>
-
-// Klassen der Hardware-Komponenten
+#include <regex>
 
 // Klasse für die Motorsteuerung
 class Engine {
 private:
   int pin1;
-  int pin1;
+  int pin2;
 
 public:
   Engine(int in1, int in2) { // Konstruktor mint zwei Pins
     pin1 = in1;
     pin2 = in2;
-    pinMode(IN1, OUTPUT);
-    pinMode(IN2, OUTPUT);
+    pinMode(pin1, OUTPUT);
+    pinMode(pin2, OUTPUT);
   }
 
   // Motorsteuerung 
   // Vorwärts(true) oder rückwärts(false) drehen
   void spin(bool forward) {
     if (forward) {
-      startSpin(IN1, IN2);
+      startSpin(pin1, pin2);
     } else {
-      startSpin(IN2, IN1);
+      startSpin(pin2, pin1);
     }
   }
 
@@ -86,33 +85,16 @@ public:
 // Klasse für den PS4 Controller
 class GamePad : public PS4Controller {
 private:
-  String macAddress;
+  char macAddress[18]; // Array für die MAC-Adresse
 public:
   GamePad() { // Konstruktor
-    macAddress = "00:00:00:00:00:00"; // Standard-MAC-Adresse, falls ungültig
-  }
-
-  bool begin(String mac) {
-    if (isValidMac(mac)) {
-      macAddress = mac;
-      // Hier sollte die Logik zum Verbinden des Controllers implementiert werden
-      return true; // Simuliert eine erfolgreiche Verbindung
-    } else {
-      return false; // Mac-Adresse ist ungültig
-    }
+    strcpy(macAddress, "00:00:00:00:00:00"); // Standard-MAC-Adresse, falls ungültig
   }
 
   // Validierung der MAC-Adresse
-  bool isValidMac(String mac) {
-    if (mac.length() != 17) return false;
-    for (int i = 0; i < mac.length(); i++) {
-      if (i % 3 == 2) {
-        if (mac[i] != ':') return false;
-      } else {
-        if (!isxdigit(mac[i])) return false;
-      }
-    }
-    return true;
+  bool isValidMac(const char* mac) {
+    std::regex macRegex("([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})");
+    return std::regex_match(mac, macRegex);
   }
 };
 
