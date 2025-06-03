@@ -102,12 +102,12 @@ public:
 
 GamePad Controller; // PS4 Controller
 
-Engine M1(23, 22); // Kettenmotor links
-Engine M2(21, 19); // Kettenmotor rechts
-Engine M3(18, 5); // Turmmotor
-Engine M4(17, 16); // Unterarmmotor
-Engine M5(4, 0); // Oberarmmotor
-Engine M6(2, 15); // Schaufelmotor
+Engine LeftChainEngine(23, 22); // Kettenmotor links
+Engine RightChainEngine(21, 19); // Kettenmotor rechts
+Engine TurretEngine(18, 5); // Turmmotor
+Engine LowerArmEngine(17, 16); // Unterarmmotor
+Engine UpperArmEngine(4, 0); // Oberarmmotor
+Engine ShovelEngine(2, 15); // Schaufelmotor
 
 LED Light(13);
 
@@ -185,56 +185,56 @@ void loop() {
 // Funktionen des Buggers
 
 void drive(bool forward) {
-  M1.spin(forward); // Linker Motor fährt vorwärts oder rückwärts
-  M2.spin(forward); // Rechter Motor fährt vorwärts oder rückwärts
+  LeftChainEngine.spin(forward); // Linker Motor fährt vorwärts oder rückwärts
+  RightChainEngine.spin(forward); // Rechter Motor fährt vorwärts oder rückwärts
 }
 
 void turn(bool left) {
   if (left) { // Wenn nach links gedreht wird
-    M1.stop(); // Linker Motor stoppt
-    M2.spin(true); // Rechter Motor fährt vorwärts
+    LeftChainEngine.stop(); // Linker Motor stoppt
+    RightChainEngine.spin(true); // Rechter Motor fährt vorwärts
   } else { // Wenn nach rechts gedreht wird
-    M1.spin(true); // Linker Motor fährt vorwärts
-    M2.stop(); // Rechter Motor stoppt
+    LeftChainEngine.spin(true); // Linker Motor fährt vorwärts
+    RightChainEngine.stop(); // Rechter Motor stoppt
   }
 }
 
 void stopMovement() {
-  M1.stop(); // Linker Motor stoppt
-  M2.stop(); // Rechter Motor stoppt
+  LeftChainEngine.stop(); // Linker Motor stoppt
+  RightChainEngine.stop(); // Rechter Motor stoppt
 }
 
 void turnTower(bool left) {
-  M3.spin(left); // Turmmotor dreht in die angegebene Richtung
+  TurretEngine.spin(left); // Turmmotor dreht in die angegebene Richtung
 }
 
 void stopTower() {
-  M3.stop(); // Turmmotor stoppt
+  TurretEngine.stop(); // Turmmotor stoppt
 }
 
 void moveUpperArm(bool up) {
-  M5.spin(up); // Oberarmmotor fährt in die angegebene Richtung
+  UpperArmEngine.spin(up); // Oberarmmotor fährt in die angegebene Richtung
 }
 
 void stopUpperArm() {
-  M5.stop(); // Oberarmmotor stoppt
+  UpperArmEngine.stop(); // Oberarmmotor stoppt
 }
 
 void moveLowerArm(bool up) {
-  M4.spin(up); // Unterarmmotor fährt in die angegebene Richtung
+  LowerArmEngine.spin(up); // Unterarmmotor fährt in die angegebene Richtung
 }
 
 void stopLowerArm() {
-  M4.stop(); // Unterarmmotor stoppt
+  LowerArmEngine.stop(); // Unterarmmotor stoppt
 }
 
 void moveShovel(bool up) {
-  M6.spin(up); // Schaufelmotor fährt in die angegebene Richtung
+  ShovelEngine.spin(up); // Schaufelmotor fährt in die angegebene Richtung
 }
 
 
 void stopShovel() {
-  M6.stop(); // Schaufelmotor stoppt
+  ShovelEngine.stop(); // Schaufelmotor stoppt
 }
 
 void StopAllMotors() {
