@@ -9,7 +9,7 @@ private:
   int pin2;
 
 public:
-  Engine(int in1, int in2) { // Konstruktor mint zwei Pins
+  Engine(int in1, int in2) { // Konstruktor mit zwei Pins
     pin1 = in1;
     pin2 = in2;
     pinMode(pin1, OUTPUT);
@@ -150,7 +150,7 @@ void loop() {
     // LED umschalten
     if (PS4.Share()) Light.toggle(); 
     
-    // Tummersteuerung
+    // Turmsteuerung
     if (PS4.L1()) turnTower(true);
     else if (PS4.R1()) turnTower(false);
     else stopTower();
