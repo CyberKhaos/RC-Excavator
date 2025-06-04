@@ -109,14 +109,15 @@ Engine LowerArmEngine(4, 16); // Unterarmmotor
 Engine UpperArmEngine(17, 5); // Oberarmmotor
 Engine ShovelEngine(18, 19); // Schaufelmotor
 
-LED Light(21);
+LED LightLeft(21);
+LED LightRight(22);
 
 // Aufbau und Hauptsteuerung
 
 void setup() {
   Serial.begin(115200);
 
-  Light.turnOn(); // LED einschalten
+  LightsOn(); // LED einschalten
   
   // PS4 Controller mit Mac initialisieren
   bool connected = false;
@@ -124,11 +125,11 @@ void setup() {
   Serial.println("Versuche mit Controller zu Verbinden.");
 
   for (int i = 1; i <= 3; i++) {
-    Light.blink(500); // LED blinkt, um den Verbindungsversuch anzuzeigen
+    LightsBlink(500); // LED blinkt, um den Verbindungsversuch anzuzeigen
     if (PS4.begin("78:1C:3C:E6:6D:4A")) { // MAC des Bluetooth modules: 78:1C:3C:E6:6D:4A
-      for (int j = 0; j < 3; j++) Light.blink(100); // LED blinkt 3 mal, um erfolgreiche Verbindung anzuzeigen
+      for (int j = 0; j < 3; j++) LightsBlink(100); // LED blinkt 3 mal, um erfolgreiche Verbindung anzuzeigen
       connected = true;
-      Light.turnOn(); // LED bleibt an, wenn die Verbindung erfolgreich ist
+      LightsOn(); // LED bleibt an, wenn die Verbindung erfolgreich ist
       delay(1000); // Kurze Pause, um die erfolgreiche Verbindung anzuzeigen
       Serial.println("Verbindung mit Controller Erfolgreich");
       break; // Verbindung erfolgreich, Schleife verlassen
@@ -137,7 +138,7 @@ void setup() {
       Serial.println("Versuch " + String(i) + " von 3...");
       delay(3000); // Wartezeit vor erneutem Versuch
       Serial.println("Versuche erneut zu verbinden...");
-      for (int j = 0; j < 5; j++) Light.blink(100); // LED blinkt 5 mal, um den Verbindungsversuch anzuzeigen 
+      for (int j = 0; j < 5; j++) LightsBlink(100); // LED blinkt 5 mal, um den Verbindungsversuch anzuzeigen 
       delay(1000); // Kurze Pause vor dem nächsten Versuch
     }
   }
@@ -148,16 +149,13 @@ void setup() {
   }
 
   delay(2000);
-  Light.turnOff(); // LED ausschalten
+  LightsOff(); // LED ausschalten
 }
 
 void loop() {
   if (PS4.isConnected()) {
     // LED umschalten
-    if (PS4.Share()) {
-      Light.toggle();
-      delay(500);
-    } 
+    if (PS4.Share()) toggleLights();
     
     // Turmsteuerung
     if (PS4.L1()) turnTower(true);
@@ -187,7 +185,7 @@ void loop() {
     else stopShovel();
     
     // Alle Motoren stoppen, wenn Share gedrückt wird
-    if (PS4.Options()) StopAllMotors(); 
+    if (PS4.Options()) stopAllMotors(); 
   }
 }
 
@@ -246,10 +244,31 @@ void stopShovel() {
   ShovelEngine.stop(); // Schaufelmotor stoppt
 }
 
-void StopAllMotors() {
+void stopAllMotors() {
   stopMovement(); // Alle Bewegungsmotoren stoppen
   stopTower(); // Turmmotor stoppen
   stopUpperArm(); // Oberarmmotor stoppen
   stopLowerArm(); // Unterarmmotor stoppen
   stopShovel(); // Schaufelmotor stoppen
+}
+
+void toggleLights() {
+  LightLeft.toggle(); // Linke LED umschalten
+  LightRight.toggle(); // Rechte LED umschalten
+  delay(500); // Kurze Pause, um das Umschalten zu sehen
+}
+
+void LightsOn() {
+  LightLeft.turnOn(); // Linke LED einschalten
+  LightRight.turnOn(); // Rechte LED einschalten
+}
+
+void LightsOff() {
+  LightLeft.turnOff(); // Linke LED ausschalten
+  LightRight.turnOff(); // Rechte LED ausschalten
+}
+
+void LightsBlink(int interval) {
+  LightLeft.blink(interval); // Linke LED blinken lassen
+  LightRight.blink(interval); // Rechte LED blinken lassen
 }
