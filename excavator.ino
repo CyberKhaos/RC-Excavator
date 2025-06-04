@@ -102,29 +102,35 @@ public:
 
 GamePad Controller; // PS4 Controller
 
-Engine LeftChainEngine(23, 22); // Kettenmotor links
-Engine RightChainEngine(21, 19); // Kettenmotor rechts
-Engine TurretEngine(18, 5); // Turmmotor
-Engine LowerArmEngine(17, 16); // Unterarmmotor
-Engine UpperArmEngine(4, 0); // Oberarmmotor
-Engine ShovelEngine(2, 15); // Schaufelmotor
+Engine LeftChainEngine(13, 12); // Kettenmotor links
+Engine RightChainEngine(14, 27); // Kettenmotor rechts
+Engine TurretEngine(15, 2); // Turmmotor
+Engine LowerArmEngine(4, 16); // Unterarmmotor
+Engine UpperArmEngine(17, 5); // Oberarmmotor
+Engine ShovelEngine(18, 19); // Schaufelmotor
 
-LED Light(13);
+LED Light(21);
 
 // Aufbau und Hauptsteuerung
 
 void setup() {
+  Serial.begin(115200);
+
   Light.turnOn(); // LED einschalten
   
   // PS4 Controller mit Mac initialisieren
   bool connected = false;
+
+  Serial.println("Versuche mit Controller zu Verbinden.");
+
   for (int i = 1; i <= 3; i++) {
     Light.blink(500); // LED blinkt, um den Verbindungsversuch anzuzeigen
-    if (PS4.begin("A4:53:85:0E:9C:61")) { // Hier sollte die tatsächliche MAC-Adresse des PS4 Controllers stehen
+    if (PS4.begin("78:1C:3C:E6:6D:4A")) { // MAC des Bluetooth modules: 78:1C:3C:E6:6D:4A
       for (int j = 0; j < 3; j++) Light.blink(100); // LED blinkt 3 mal, um erfolgreiche Verbindung anzuzeigen
       connected = true;
       Light.turnOn(); // LED bleibt an, wenn die Verbindung erfolgreich ist
       delay(1000); // Kurze Pause, um die erfolgreiche Verbindung anzuzeigen
+      Serial.println("Verbindung mit Controller Erfolgreich");
       break; // Verbindung erfolgreich, Schleife verlassen
     } else {
       Serial.println("Fehler beim Verbinden des PS4 Controllers");
@@ -137,6 +143,7 @@ void setup() {
   }
 
   if (!connected) {
+    Serial.println("Vrbindung fehlgeschlagen");
     while (true); // Endlosschleife, um das Programm anzuhalten
   }
 
@@ -147,7 +154,10 @@ void setup() {
 void loop() {
   if (PS4.isConnected()) {
     // LED umschalten
-    if (PS4.Share()) Light.toggle(); 
+    if (PS4.Share()) {
+      Light.toggle();
+      delay(500);
+    } 
     
     // Turmsteuerung
     if (PS4.L1()) turnTower(true);
