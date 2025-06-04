@@ -137,7 +137,6 @@ void setup() {
   }
 
   if (!connected) {
-    Serial.println("Verbindung zum PS4 Controller fehlgeschlagen. Programm wird angehalten.");
     while (true); // Endlosschleife, um das Programm anzuhalten
   }
 
